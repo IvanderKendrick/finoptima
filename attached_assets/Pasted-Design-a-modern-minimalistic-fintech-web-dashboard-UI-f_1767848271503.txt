@@ -1,0 +1,67 @@
+Design a modern, minimalistic fintech web dashboard UI for a portfolio optimization application using Mean-Variance Optimization (MVO).
+
+Style & Visual:
+- Clean, modern, and minimal design inspired by Apple and modern fintech startups
+- Dominant green color palette similar to professional finance dashboards
+- Soft shadows, rounded cards, plenty of white space
+- Flat icons, thin typography, elegant layout
+- Professional and user-friendly, suitable for investment analysis
+
+Layout:
+- Left sidebar navigation with dark green background
+- Main content area on the right
+- Card-based layout on the top section
+- Charts arranged neatly below the cards
+- Responsive web dashboard design
+
+Sidebar Navigation (Left):
+- Dashboard (active)
+- Assets
+- Optimization
+- History
+- Profile
+
+Top Section – Summary Cards (4–5 cards):
+1. Total Portfolio Value
+   - Display: "Rp 125,000,000"
+   - Subtitle: "Total Asset Value"
+2. Expected Return
+   - Display: "12.5% / year"
+   - Subtitle: "Optimized Portfolio Return"
+3. Portfolio Risk (Volatility)
+   - Display: "8.1%"
+   - Subtitle: "Standard Deviation"
+4. Number of Assets
+   - Display: "7 Assets"
+   - Subtitle: "Diversified Holdings"
+5. Sharpe Ratio (optional card)
+   - Display: "1.42"
+   - Subtitle: "Risk-Adjusted Performance"
+
+Cards should be rectangular with rounded corners, subtle shadows, and green accent highlights.
+
+Middle Section – Charts:
+- Donut / Pie Chart:
+  Title: "Asset Allocation"
+  Shows percentage allocation of each asset in the optimized portfolio
+  Use green shades with clear legends
+
+- Line Chart:
+  Title: "Portfolio Value Over Time"
+  Shows portfolio value growth based on optimization history
+  X-axis: Time
+  Y-axis: Portfolio Value (Rp)
+
+Bottom Section – Advanced Visualization:
+- Scatter Plot:
+  Title: "Risk vs Return"
+  Displays the optimized portfolio point and efficient frontier
+  X-axis: Risk (Volatility)
+  Y-axis: Expected Return
+
+Typography:
+- Sans-serif modern font
+- Clear hierarchy for titles, values, and descriptions
+
+Overall Goal:
+Create a professional fintech dashboard UI that provides at-a-glance insights into portfolio performance, risk, and optimization results, with a clean, elegant, and modern appearance similar to premium financial platforms.
