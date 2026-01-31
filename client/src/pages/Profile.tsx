@@ -1,102 +1,117 @@
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Layout } from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/hooks/use-auth-provider";
+import { useUpdatePassword } from "@/hooks/use-profile";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { User, Settings, Shield, CreditCard, Bell } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Loader2 } from "lucide-react";
+
+const passwordSchema = z.object({
+  oldPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string(),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+type PasswordForm = z.infer<typeof passwordSchema>;
 
 export default function Profile() {
+  const { user } = useAuth();
+  const { mutate: updatePassword, isPending } = useUpdatePassword();
+
+  const form = useForm<PasswordForm>({
+    resolver: zodResolver(passwordSchema),
+  });
+
+  const onSubmit = (data: PasswordForm) => {
+    updatePassword(data, {
+      onSuccess: () => form.reset()
+    });
+  };
+
   return (
     <Layout>
-      <div className="space-y-8 max-w-4xl">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Profile & Settings</h1>
-          <p className="text-slate-500 mt-1">Manage your account preferences and subscription.</p>
-        </div>
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Profile Settings</h2>
+        <p className="text-slate-500">Manage your account information.</p>
+      </div>
 
-        <div className="grid gap-6">
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5 text-primary" />
-                Personal Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-slate-500">Full Name</label>
-                  <div className="p-3 bg-slate-50 rounded-lg border text-slate-900 font-medium">John Investor</div>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-slate-500">Email Address</label>
-                  <div className="p-3 bg-slate-50 rounded-lg border text-slate-900 font-medium">john.investor@example.com</div>
-                </div>
+      <div className="grid gap-8 max-w-2xl">
+        <Card className="shadow-sm border-slate-200">
+          <CardHeader className="flex flex-row items-center gap-4 space-y-0">
+            <Avatar className="h-16 w-16 border-2 border-slate-100">
+              <AvatarFallback className="bg-emerald-100 text-emerald-700 text-2xl font-bold">
+                {user?.name?.charAt(0) || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <CardTitle className="text-xl">{user?.name}</CardTitle>
+              <CardDescription>{user?.email}</CardDescription>
+            </div>
+          </CardHeader>
+        </Card>
+
+        <Card className="shadow-sm border-slate-200">
+          <CardHeader>
+            <CardTitle>Change Password</CardTitle>
+            <CardDescription>Ensure your account is secure with a strong password.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="oldPassword">Current Password</Label>
+                <Input 
+                  id="oldPassword" 
+                  type="password" 
+                  {...form.register("oldPassword")} 
+                />
+                {form.formState.errors.oldPassword && (
+                  <p className="text-xs text-red-500">{form.formState.errors.oldPassword.message}</p>
+                )}
               </div>
-              <Button variant="outline" className="mt-2">Edit Profile</Button>
-            </CardContent>
-          </Card>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Shield className="w-4 h-4 text-slate-500" />
-                  Security
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div className="text-sm font-medium">Two-Factor Authentication</div>
-                  <div className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Enabled</div>
-                </div>
-                <Separator />
-                <Button variant="link" className="px-0 h-auto text-primary">Change Password</Button>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <CreditCard className="w-4 h-4 text-slate-500" />
-                  Subscription
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div className="text-sm font-medium">Plan</div>
-                  <div className="text-sm font-bold text-slate-900">Pro Investor</div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div className="text-sm font-medium">Next Billing</div>
-                  <div className="text-sm text-slate-500">Oct 24, 2024</div>
-                </div>
-                <Separator />
-                <Button variant="link" className="px-0 h-auto text-primary">Manage Subscription</Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Bell className="w-4 h-4 text-slate-500" />
-                Notification Preferences
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {["Portfolio Rebalancing Alerts", "Market News Digest", "Weekly Performance Report"].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <span className="text-sm text-slate-700">{item}</span>
-                    <div className={`w-9 h-5 rounded-full relative cursor-pointer transition-colors ${i === 0 ? 'bg-primary' : 'bg-slate-200'}`}>
-                      <div className={`absolute top-1 left-1 bg-white w-3 h-3 rounded-full transition-transform ${i === 0 ? 'translate-x-4' : ''}`} />
-                    </div>
-                  </div>
-                ))}
+              
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input 
+                  id="newPassword" 
+                  type="password" 
+                  {...form.register("newPassword")} 
+                />
+                {form.formState.errors.newPassword && (
+                  <p className="text-xs text-red-500">{form.formState.errors.newPassword.message}</p>
+                )}
               </div>
-            </CardContent>
-          </Card>
-        </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Input 
+                  id="confirmPassword" 
+                  type="password" 
+                  {...form.register("confirmPassword")} 
+                />
+                {form.formState.errors.confirmPassword && (
+                  <p className="text-xs text-red-500">{form.formState.errors.confirmPassword.message}</p>
+                )}
+              </div>
+
+              <Button 
+                type="submit" 
+                className="bg-emerald-600 hover:bg-emerald-700 mt-2" 
+                disabled={isPending}
+              >
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Update Password
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );

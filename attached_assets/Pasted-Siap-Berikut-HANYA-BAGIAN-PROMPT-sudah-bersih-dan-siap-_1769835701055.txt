@@ -1,0 +1,185 @@
+Siap 👍
+Berikut **HANYA BAGIAN PROMPT**, sudah bersih dan siap **langsung copy–paste ke Replit AI**.
+
+---
+
+## 📌 PROMPT UNTUK REPLIT AI
+
+Lanjutkan pengembangan website **Aplikasi Manajemen dan Optimasi Portofolio Aset** menggunakan **STACK, STRUKTUR PROYEK, DAN STYLING YANG SAMA PERSIS** dengan hasil generate sebelumnya.
+
+❗ Jangan mengubah:
+
+* desain UI
+* tema warna
+* layout
+* dashboard yang sudah ada
+
+Fokus hanya pada **penambahan halaman dan fitur** yang belum ada.
+Gunakan **JWT** untuk autentikasi user.
+
+---
+
+### 1️⃣ Landing Page
+
+* Halaman awal aplikasi (tanpa login)
+* Menampilkan:
+
+  * Nama dan deskripsi singkat aplikasi
+  * Tombol **Login** dan **Register**
+* Navigasi:
+
+  * Login → halaman Login
+  * Register → halaman Register
+* Styling bebas tetapi **konsisten dengan desain aplikasi**
+
+---
+
+### 2️⃣ Register Page
+
+* Form:
+
+  * Nama
+  * Email
+  * Password
+  * Konfirmasi password
+* Validasi:
+
+  * Semua field wajib diisi
+  * Email unik
+  * Password dan konfirmasi harus sama
+* Alur:
+
+  * Simpan data user
+  * Generate JWT
+  * Redirect ke **Dashboard**
+* Tampilkan pesan error jika input tidak valid
+
+---
+
+### 3️⃣ Login Page
+
+* Form:
+
+  * Email
+  * Password
+* Alur:
+
+  * Validasi kredensial
+  * Jika berhasil:
+
+    * Generate JWT
+    * Redirect ke **Dashboard**
+  * Jika gagal:
+
+    * Tampilkan pesan error
+* Semua halaman selain Landing, Login, dan Register **harus dilindungi JWT**
+
+---
+
+### 4️⃣ Dashboard
+
+⚠️ **JANGAN diubah**
+Pastikan hanya bisa diakses setelah login dan menjadi navigasi ke halaman lain.
+
+---
+
+### 5️⃣ Assets Page (CRUD)
+
+Data aset:
+
+* Nama aset
+* Nilai investasi
+* Expected return
+* Risiko (standar deviasi)
+* (Opsional) korelasi antar aset
+
+Fitur:
+
+* Menampilkan daftar aset (tabel)
+* Tambah aset (form + validasi)
+* Edit aset
+* Hapus aset (dengan konfirmasi)
+
+---
+
+### 6️⃣ Optimization Page (Mean-Variance Optimization)
+
+* Data aset diambil dari **Assets Page**
+* User memilih aset dan memasukkan bobot atau sistem membagi bobot sederhana
+* Input tambahan (jika diperlukan):
+
+  * Risiko
+  * Kovarians / korelasi (boleh manual)
+
+#### Perhitungan MVO:
+
+Expected Return Portofolio:
+E(Rₚ) = Σ (wᵢ × E(Rᵢ))
+
+Varians Portofolio:
+σₚ² = Σ Σ (wᵢ × wⱼ × Cov(Rᵢ, Rⱼ))
+
+Risiko Portofolio:
+σₚ = √(σₚ²)
+
+Implementasi boleh sederhana / mock, yang penting:
+
+* rumus digunakan
+* hasil logis
+* sesuai use case
+
+Output:
+
+* Bobot optimal aset
+* Expected return portofolio
+* Risiko portofolio
+
+Grafik (opsional):
+
+* Efficient frontier
+* Diagram alokasi aset
+
+Setiap hasil optimasi **disimpan otomatis ke History**.
+
+---
+
+### 7️⃣ History Page
+
+* Menampilkan riwayat hasil optimasi:
+
+  * Tanggal
+  * Parameter
+  * Return dan risiko
+* Fitur:
+
+  * Pencarian riwayat
+  * Hapus riwayat
+* Tampilkan pesan jika data kosong
+
+---
+
+### 8️⃣ Profile Page
+
+* Menampilkan:
+
+  * Nama user
+  * Email
+* Fitur ganti password:
+
+  * Password lama
+  * Password baru
+  * Konfirmasi password
+* Validasi dan simpan perubahan
+
+---
+
+### 9️⃣ Logout
+
+* User klik Logout
+* JWT dihapus
+* Redirect ke **Landing Page**
+* User tidak dapat mengakses halaman lain tanpa login ulang
+
+---
+
+Gunakan **styling dan komponen UI yang sama** dengan hasil sebelumnya dan pastikan seluruh alur **sesuai use case diagram**.

@@ -1,103 +1,150 @@
 import { db } from "./db";
 import {
-  assets,
-  portfolioMetrics,
-  portfolioHistory,
-  efficientFrontierPoints,
-  type Metric,
-  type Asset,
-  type HistoryPoint,
-  type FrontierPoint
+  users, assets, optimizationHistory, portfolioHistory, portfolioMetrics, efficientFrontierPoints,
+  type User, type InsertUser, type Asset, type InsertAsset, type Optimization,
+  type Metric, type HistoryPoint, type FrontierPoint
 } from "@shared/schema";
+import { eq, and } from "drizzle-orm";
 
 export interface IStorage {
-  getDashboardData(): Promise<{
+  // User operations
+  getUser(id: number): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updatePassword(userId: number, hashedPassword: string): Promise<void>;
+
+  // Asset operations
+  getAssets(userId: number): Promise<Asset[]>;
+  getAsset(id: number): Promise<Asset | undefined>;
+  createAsset(asset: InsertAsset & { userId: number }): Promise<Asset>;
+  updateAsset(id: number, asset: Partial<InsertAsset>): Promise<Asset>;
+  deleteAsset(id: number): Promise<void>;
+
+  // Dashboard operations
+  getDashboardData(userId: number): Promise<{
     metrics: Metric[];
     assets: Asset[];
     history: HistoryPoint[];
     frontier: FrontierPoint[];
   }>;
-  seedData(): Promise<void>;
+
+  // Optimization operations
+  createOptimizationHistory(userId: number, optimization: Omit<Optimization, 'id' | 'userId' | 'date'>): Promise<Optimization>;
+  getOptimizationHistory(userId: number): Promise<Optimization[]>;
+  deleteOptimizationHistory(id: number): Promise<void>;
+  
+  // Seed data for new users
+  seedUserData(userId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
-  async getDashboardData() {
-    const [metricsData, assetsData, historyData, frontierData] = await Promise.all([
-      db.select().from(portfolioMetrics),
-      db.select().from(assets),
-      db.select().from(portfolioHistory).orderBy(portfolioHistory.date),
-      db.select().from(efficientFrontierPoints)
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async updatePassword(userId: number, hashedPassword: string): Promise<void> {
+    await db.update(users)
+      .set({ password: hashedPassword })
+      .where(eq(users.id, userId));
+  }
+
+  async getAssets(userId: number): Promise<Asset[]> {
+    return db.select().from(assets).where(eq(assets.userId, userId));
+  }
+
+  async getAsset(id: number): Promise<Asset | undefined> {
+    const [asset] = await db.select().from(assets).where(eq(assets.id, id));
+    return asset;
+  }
+
+  async createAsset(asset: InsertAsset & { userId: number }): Promise<Asset> {
+    const [newAsset] = await db.insert(assets).values(asset).returning();
+    return newAsset;
+  }
+
+  async updateAsset(id: number, asset: Partial<InsertAsset>): Promise<Asset> {
+    const [updatedAsset] = await db.update(assets)
+      .set(asset)
+      .where(eq(assets.id, id))
+      .returning();
+    return updatedAsset;
+  }
+
+  async deleteAsset(id: number): Promise<void> {
+    await db.delete(assets).where(eq(assets.id, id));
+  }
+
+  async getDashboardData(userId: number) {
+    // For MVP, we'll return seeded/mock data structure but scoped if possible.
+    // Since metrics/history/frontier tables are not strictly user-scoped in schema yet (optional), 
+    // we will fetch all or mock if empty.
+    
+    // Check if user has assets
+    const userAssets = await this.getAssets(userId);
+    
+    // NOTE: In a real app, metrics would be calculated from assets. 
+    // Here we return mock metrics or user specific metrics if we implemented that fully.
+    // For now, let's return some default metrics if none exist for user, or empty.
+    
+    // We will use the seeded data tables for demo purposes on the dashboard
+    // but filtered by userId if columns exist.
+    // In schema.ts, I made userId optional for metrics/history/frontier.
+    
+    const [metricsData, historyData, frontierData] = await Promise.all([
+      db.select().from(portfolioMetrics), // Returns all (demo data)
+      db.select().from(portfolioHistory).orderBy(portfolioHistory.date), // Returns all (demo data)
+      db.select().from(efficientFrontierPoints) // Returns all (demo data)
     ]);
 
     return {
       metrics: metricsData,
-      assets: assetsData,
+      assets: userAssets,
       history: historyData,
       frontier: frontierData
     };
   }
 
-  async seedData() {
-    const existing = await db.select().from(assets).limit(1);
+  async createOptimizationHistory(userId: number, optimization: Omit<Optimization, 'id' | 'userId' | 'date'>): Promise<Optimization> {
+    const [opt] = await db.insert(optimizationHistory).values({
+      ...optimization,
+      userId
+    }).returning();
+    return opt;
+  }
+
+  async getOptimizationHistory(userId: number): Promise<Optimization[]> {
+    return db.select().from(optimizationHistory).where(eq(optimizationHistory.userId, userId));
+  }
+
+  async deleteOptimizationHistory(id: number): Promise<void> {
+    await db.delete(optimizationHistory).where(eq(optimizationHistory.id, id));
+  }
+
+  async seedUserData(userId: number) {
+    // Check if user already has assets
+    const existing = await db.select().from(assets).where(eq(assets.userId, userId)).limit(1);
     if (existing.length > 0) return;
 
-    // Seed Metrics
-    await db.insert(portfolioMetrics).values([
-      { label: "Total Portfolio Value", value: "Rp 125,000,000", subValue: "Total Asset Value" },
-      { label: "Expected Return", value: "12.5% / year", subValue: "Optimized Portfolio Return" },
-      { label: "Portfolio Risk", value: "8.1%", subValue: "Standard Deviation" },
-      { label: "Number of Assets", value: "7 Assets", subValue: "Diversified Holdings" }
-    ]);
-
-    // Seed Assets for Allocation
+    // Seed Default Assets for new user
     await db.insert(assets).values([
-      { symbol: "BBCA", name: "Bank Central Asia", value: 45000000, allocation: 36, color: "#059669" }, // Emerald 600
-      { symbol: "BBRI", name: "Bank Rakyat Indonesia", value: 30000000, allocation: 24, color: "#10B981" }, // Emerald 500
-      { symbol: "TLKM", name: "Telkom Indonesia", value: 20000000, allocation: 16, color: "#34D399" }, // Emerald 400
-      { symbol: "BMRI", name: "Bank Mandiri", value: 15000000, allocation: 12, color: "#6EE7B7" }, // Emerald 300
-      { symbol: "ASII", name: "Astra International", value: 10000000, allocation: 8, color: "#A7F3D0" }, // Emerald 200
-      { symbol: "UNVR", name: "Unilever", value: 5000000, allocation: 4, color: "#D1FAE5" }, // Emerald 100
+      { userId, symbol: "BBCA", name: "Bank Central Asia", value: 45000000, expectedReturn: 12.5, risk: 8.5, allocation: 36, color: "#059669" },
+      { userId, symbol: "BBRI", name: "Bank Rakyat Indonesia", value: 30000000, expectedReturn: 14.2, risk: 10.1, allocation: 24, color: "#10B981" },
+      { userId, symbol: "TLKM", name: "Telkom Indonesia", value: 20000000, expectedReturn: 8.5, risk: 6.2, allocation: 16, color: "#34D399" },
+      { userId, symbol: "BMRI", name: "Bank Mandiri", value: 15000000, expectedReturn: 13.8, risk: 9.8, allocation: 12, color: "#6EE7B7" },
+      { userId, symbol: "ASII", name: "Astra International", value: 10000000, expectedReturn: 10.5, risk: 7.5, allocation: 8, color: "#A7F3D0" },
+      { userId, symbol: "UNVR", name: "Unilever", value: 5000000, expectedReturn: 7.2, risk: 5.5, allocation: 4, color: "#D1FAE5" },
     ]);
-
-    // Seed History
-    const history = [];
-    let value = 100000000;
-    const now = new Date();
-    for (let i = 30; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      // Random walk
-      value = value * (1 + (Math.random() * 0.04 - 0.015)); 
-      history.push({
-        date: date.toISOString().split('T')[0],
-        value: Math.round(value)
-      });
-    }
-    await db.insert(portfolioHistory).values(history);
-
-    // Seed Efficient Frontier Points
-    const points = [];
-    for (let i = 0; i < 50; i++) {
-      const risk = 5 + Math.random() * 15; // 5% to 20%
-      // Simple curve approximation for frontier: Return ~ log(risk)
-      const expectedReturn = 4 + Math.log(risk - 4) * 5 + (Math.random() * 2 - 1);
-      
-      points.push({
-        risk: Number(risk.toFixed(2)),
-        return: Number(expectedReturn.toFixed(2)),
-        sharpeRatio: Number((expectedReturn / risk).toFixed(2)),
-        isOptimal: false
-      });
-    }
-    // Add optimal point
-    points.push({
-      risk: 8.1,
-      return: 12.5,
-      sharpeRatio: 1.54,
-      isOptimal: true
-    });
-    
-    await db.insert(efficientFrontierPoints).values(points);
   }
 }
 
