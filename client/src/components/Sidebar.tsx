@@ -1,19 +1,19 @@
 import { Link, useLocation } from "wouter";
-import { 
-  LayoutDashboard, 
-  PieChart, 
-  TrendingUp, 
-  History, 
-  User, 
+import {
+  LayoutDashboard,
+  PieChart,
+  TrendingUp,
+  History,
+  User,
   LogOut,
-  WalletMinimal
+  WalletMinimal,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth-provider";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/assets", label: "Assets", icon: WalletMinimal },
   { href: "/optimization", label: "Optimization", icon: TrendingUp },
   { href: "/history", label: "History", icon: History },
@@ -41,12 +41,19 @@ export function Sidebar() {
               <div
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group cursor-pointer",
-                  isActive 
-                    ? "bg-emerald-500/10 text-emerald-400 font-medium shadow-sm border border-emerald-500/20" 
-                    : "hover:bg-slate-800 hover:text-white"
+                  isActive
+                    ? "bg-emerald-500/10 text-emerald-400 font-medium shadow-sm border border-emerald-500/20"
+                    : "hover:bg-slate-800 hover:text-white",
                 )}
               >
-                <item.icon className={cn("h-5 w-5", isActive ? "text-emerald-500" : "text-slate-400 group-hover:text-white")} />
+                <item.icon
+                  className={cn(
+                    "h-5 w-5",
+                    isActive
+                      ? "text-emerald-500"
+                      : "text-slate-400 group-hover:text-white",
+                  )}
+                />
                 {item.label}
               </div>
             </Link>
@@ -55,8 +62,8 @@ export function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-slate-800">
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           className="w-full justify-start text-slate-400 hover:text-red-400 hover:bg-red-950/30 gap-3"
           onClick={logout}
         >

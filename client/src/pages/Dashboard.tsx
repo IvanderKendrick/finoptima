@@ -3,9 +3,31 @@ import { MetricsCards } from "@/components/MetricsCards";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ScatterChart, Scatter, ZAxis } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ScatterChart,
+  Scatter,
+  ZAxis,
+} from "recharts";
 
-const COLORS = ['#10B981', '#34D399', '#6EE7B7', '#A7F3D0', '#D1FAE5', '#064E3B', '#065F46'];
+const COLORS = [
+  "#10B981",
+  "#34D399",
+  "#6EE7B7",
+  "#A7F3D0",
+  "#D1FAE5",
+  "#064E3B",
+  "#065F46",
+];
 
 export default function Dashboard() {
   const { data, isLoading, error } = useDashboard();
@@ -34,8 +56,12 @@ export default function Dashboard() {
     <Layout>
       <div className="space-y-8">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Overview</h2>
-          <p className="text-slate-500">Your portfolio performance at a glance.</p>
+          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">
+            Overview
+          </h2>
+          <p className="text-slate-500">
+            Your portfolio performance at a glance.
+          </p>
         </div>
 
         <MetricsCards metrics={data.metrics} />
@@ -60,21 +86,41 @@ export default function Dashboard() {
                       dataKey="value"
                     >
                       {data.assets.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.color || COLORS[index % COLORS.length]}
+                        />
                       ))}
                     </Pie>
-                    <Tooltip 
-                      formatter={(value: number) => `Rp ${value.toLocaleString()}`}
-                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    <Tooltip
+                      formatter={(value: number) =>
+                        `Rp ${value.toLocaleString()}`
+                      }
+                      contentStyle={{
+                        borderRadius: "8px",
+                        border: "none",
+                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                      }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
               <div className="grid grid-cols-2 gap-2 mt-4">
-                {data.assets.slice(0, 6).map((asset, i) => (
-                  <div key={asset.id} className="flex items-center gap-2 text-sm">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                    <span className="text-slate-600 truncate">{asset.name}</span>
+                {data.assets.map((asset, i) => (
+                  <div
+                    key={asset.id}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{
+                        backgroundColor:
+                          asset.color || COLORS[i % COLORS.length],
+                      }}
+                    />
+                    <span className="text-slate-600 truncate">
+                      {asset.name}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -90,31 +136,43 @@ export default function Dashboard() {
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={data.history}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                    <XAxis 
-                      dataKey="date" 
-                      tick={{fontSize: 12, fill: '#64748B'}} 
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="#E2E8F0"
+                    />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 12, fill: "#64748B" }}
                       axisLine={false}
                       tickLine={false}
                       dy={10}
                     />
-                    <YAxis 
-                      tick={{fontSize: 12, fill: '#64748B'}} 
+                    <YAxis
+                      tick={{ fontSize: 12, fill: "#64748B" }}
                       axisLine={false}
                       tickLine={false}
-                      tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`}
+                      tickFormatter={(value) =>
+                        `${(value / 1000000).toFixed(0)}M`
+                      }
                     />
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                      formatter={(value: number) => `Rp ${value.toLocaleString()}`}
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: "8px",
+                        border: "none",
+                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                      }}
+                      formatter={(value: number) =>
+                        `Rp ${value.toLocaleString()}`
+                      }
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke="#10B981" 
-                      strokeWidth={3} 
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#10B981"
+                      strokeWidth={3}
                       dot={false}
-                      activeDot={{ r: 6, fill: '#10B981' }} 
+                      activeDot={{ r: 6, fill: "#10B981" }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -130,32 +188,49 @@ export default function Dashboard() {
             <CardContent>
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                  <ScatterChart
+                    margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                    <XAxis 
-                      type="number" 
-                      dataKey="risk" 
-                      name="Risk" 
-                      unit="%" 
-                      tick={{fontSize: 12, fill: '#64748B'}}
+                    <XAxis
+                      type="number"
+                      dataKey="risk"
+                      name="Risk"
+                      unit="%"
+                      tick={{ fontSize: 12, fill: "#64748B" }}
                       axisLine={false}
                       tickLine={false}
                     />
-                    <YAxis 
-                      type="number" 
-                      dataKey="return" 
-                      name="Return" 
-                      unit="%" 
-                      tick={{fontSize: 12, fill: '#64748B'}}
+                    <YAxis
+                      type="number"
+                      dataKey="return"
+                      name="Return"
+                      unit="%"
+                      tick={{ fontSize: 12, fill: "#64748B" }}
                       axisLine={false}
                       tickLine={false}
                     />
-                    <Tooltip 
-                      cursor={{ strokeDasharray: '3 3' }}
-                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    <Tooltip
+                      cursor={{ strokeDasharray: "3 3" }}
+                      contentStyle={{
+                        borderRadius: "8px",
+                        border: "none",
+                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                      }}
                     />
-                    <Scatter name="Efficient Frontier" data={data.frontier.filter(p => !p.isOptimal)} fill="#CBD5E1" line={false} />
-                    <Scatter name="Optimal Portfolio" data={data.frontier.filter(p => p.isOptimal)} fill="#10B981" shape="star" s={200} />
+                    <Scatter
+                      name="Efficient Frontier"
+                      data={data.frontier.filter((p) => !p.isOptimal)}
+                      fill="#CBD5E1"
+                      line={false}
+                    />
+                    <Scatter
+                      name="Optimal Portfolio"
+                      data={data.frontier.filter((p) => p.isOptimal)}
+                      fill="#10B981"
+                      shape="star"
+                      s={200}
+                    />
                   </ScatterChart>
                 </ResponsiveContainer>
               </div>
