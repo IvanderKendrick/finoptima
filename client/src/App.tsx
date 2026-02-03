@@ -40,7 +40,12 @@ function Router() {
           <Optimization />
         </ProtectedRoute>
       </Route>
-      <Route path="/history">
+      <Route path="/history/optimization">
+        <ProtectedRoute>
+          <History />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/history/portfolio">
         <ProtectedRoute>
           <History />
         </ProtectedRoute>
