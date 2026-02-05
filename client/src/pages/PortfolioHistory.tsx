@@ -2,7 +2,7 @@ import { Layout } from "@/components/Layout";
 import {
   usePortfolioHistory,
   useDeletePortfolioHistory,
-} from "@/hooks/use-portfolio-history";
+} from "@/hooks/use-portfolio";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {

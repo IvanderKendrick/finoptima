@@ -295,6 +295,15 @@ export async function registerRoutes(
     },
   );
 
+  app.get(
+    api.portfolio.history.path,
+    authenticateToken,
+    async (req: any, res) => {
+      const history = await storage.getPortfolioHistory(req.user.id);
+      res.json(history);
+    },
+  );
+
   app.delete(
     api.optimization.deleteHistory.path,
     authenticateToken,

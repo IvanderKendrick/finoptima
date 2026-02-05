@@ -139,6 +139,13 @@ export const api = {
         }),
       },
     },
+    history: {
+      method: "GET" as const,
+      path: "/api/portfolio/history",
+      responses: {
+        200: z.array(z.custom<typeof portfolioHistory.$inferSelect>()),
+      },
+    },
   },
   optimization: {
     run: {

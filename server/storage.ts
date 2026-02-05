@@ -169,6 +169,13 @@ export class DatabaseStorage implements IStorage {
       .where(eq(optimizationHistory.userId, userId));
   }
 
+  async getPortfolioHistory(userId: number): Promise<HistoryPoint[]> {
+    return db
+      .select()
+      .from(portfolioHistory)
+      .where(eq(portfolioHistory.userId, userId));
+  }
+
   async deleteOptimizationHistory(id: number): Promise<void> {
     await db.delete(optimizationHistory).where(eq(optimizationHistory.id, id));
   }

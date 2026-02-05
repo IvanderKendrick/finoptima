@@ -15,6 +15,7 @@ import Optimization from "@/pages/Optimization";
 import History from "@/pages/History";
 import Profile from "@/pages/Profile";
 import NotFound from "@/pages/not-found";
+import PortfolioHistory from "./pages/PortfolioHistory";
 
 function Router() {
   return (
@@ -47,7 +48,7 @@ function Router() {
       </Route>
       <Route path="/history/portfolio">
         <ProtectedRoute>
-          <History />
+          <PortfolioHistory />
         </ProtectedRoute>
       </Route>
       <Route path="/profile">
