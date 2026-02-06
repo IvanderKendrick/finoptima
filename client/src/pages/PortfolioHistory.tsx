@@ -14,16 +14,26 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Loader2, Trash2, CalendarClock } from "lucide-react";
+import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+  AlertDialogFooter,
+  AlertDialogHeader,
+} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 
 export default function PortfolioHistory() {
   const { data: history, isLoading } = usePortfolioHistory();
   const deleteMutation = useDeletePortfolioHistory();
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const handleDelete = (id: number) => {
-    if (confirm("Delete this portfolio snapshot?")) {
-      deleteMutation.mutate(id);
-    }
+    setDeleteId(id);
   };
 
   if (isLoading) {
@@ -101,6 +111,34 @@ export default function PortfolioHistory() {
           </Table>
         </CardContent>
       </Card>
+      <AlertDialog
+        open={deleteId !== null}
+        onOpenChange={() => setDeleteId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete history?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              record.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteId !== null) {
+                  deleteMutation.mutate(deleteId);
+                  setDeleteId(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 }

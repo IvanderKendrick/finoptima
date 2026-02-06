@@ -1,19 +1,39 @@
 import { Layout } from "@/components/Layout";
-import { useOptimizationHistory, useDeleteHistory } from "@/hooks/use-optimization";
+import {
+  useOptimizationHistory,
+  useDeleteHistory,
+} from "@/hooks/use-optimization";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Loader2, Trash2, CalendarClock } from "lucide-react";
 import { format } from "date-fns";
+import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+  AlertDialogFooter,
+  AlertDialogHeader,
+} from "@/components/ui/alert-dialog";
 
 export default function History() {
   const { data: history, isLoading } = useOptimizationHistory();
   const deleteMutation = useDeleteHistory();
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const handleDelete = (id: number) => {
-    if (confirm("Delete this history record?")) {
-      deleteMutation.mutate(id);
-    }
+    setDeleteId(id);
   };
 
   if (isLoading) {
@@ -29,7 +49,9 @@ export default function History() {
   return (
     <Layout>
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Optimization History</h2>
+        <h2 className="text-3xl font-bold text-slate-900 tracking-tight">
+          Optimization History
+        </h2>
         <p className="text-slate-500">Review your past analysis results.</p>
       </div>
 
@@ -48,24 +70,32 @@ export default function History() {
             <TableBody>
               {history?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-48 text-center text-slate-500">
+                  <TableCell
+                    colSpan={5}
+                    className="h-48 text-center text-slate-500"
+                  >
                     <CalendarClock className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                    No optimization history found. Run your first analysis in the Optimization tab.
+                    No optimization history found. Run your first analysis in
+                    the Optimization tab.
                   </TableCell>
                 </TableRow>
               ) : (
                 history?.map((item) => (
                   <TableRow key={item.id} className="group">
                     <TableCell className="pl-6 font-medium text-slate-900">
-                      {item.date ? format(new Date(item.date), 'MMM dd, yyyy HH:mm') : '-'}
+                      {item.date
+                        ? format(new Date(item.date), "MMM dd, yyyy HH:mm")
+                        : "-"}
                     </TableCell>
-                    <TableCell className="text-emerald-600 font-medium">{item.return.toFixed(2)}%</TableCell>
+                    <TableCell className="text-emerald-600 font-medium">
+                      {item.return.toFixed(2)}%
+                    </TableCell>
                     <TableCell>{item.risk.toFixed(2)}%</TableCell>
                     <TableCell>{item.sharpeRatio.toFixed(2)}</TableCell>
                     <TableCell className="text-right pr-6">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="h-8 w-8 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => handleDelete(item.id)}
                       >
@@ -79,6 +109,34 @@ export default function History() {
           </Table>
         </CardContent>
       </Card>
+      <AlertDialog
+        open={deleteId !== null}
+        onOpenChange={() => setDeleteId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete history?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              record.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteId !== null) {
+                  deleteMutation.mutate(deleteId);
+                  setDeleteId(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 }
