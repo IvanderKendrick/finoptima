@@ -146,6 +146,13 @@ export const api = {
         200: z.array(z.custom<typeof portfolioHistory.$inferSelect>()),
       },
     },
+    deleteHistory: {
+      method: "DELETE" as const,
+      path: "/api/portfolio/history/:id",
+      responses: {
+        204: z.void(),
+      },
+    },
   },
   optimization: {
     run: {

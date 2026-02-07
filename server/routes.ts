@@ -314,5 +314,15 @@ export async function registerRoutes(
     },
   );
 
+  app.delete(
+    api.portfolio.deleteHistory.path,
+    authenticateToken,
+    async (req: any, res) => {
+      const id = parseInt(req.params.id);
+      await storage.deletePortfolioHistory(id);
+      res.status(204).send();
+    },
+  );
+
   return httpServer;
 }

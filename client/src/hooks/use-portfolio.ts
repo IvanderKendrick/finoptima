@@ -32,18 +32,27 @@ export function useDeletePortfolioHistory() {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const url = buildUrl(api.optimization.deleteHistory.path, { id });
+      const url = buildUrl(api.portfolio.deleteHistory.path, { id });
       const res = await fetch(url, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-      if (!res.ok) throw new Error("Failed to delete history item");
+
+      if (!res.ok) {
+        throw new Error("Failed to delete portfolio history item");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: [api.optimization.history.path],
+        queryKey: [api.portfolio.history.path],
       });
-      toast({ title: "Deleted", description: "History item removed." });
+
+      toast({
+        title: "Deleted",
+        description: "Portfolio history item removed.",
+      });
     },
     onError: (err) => {
       toast({

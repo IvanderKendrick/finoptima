@@ -180,6 +180,10 @@ export class DatabaseStorage implements IStorage {
     await db.delete(optimizationHistory).where(eq(optimizationHistory.id, id));
   }
 
+  async deletePortfolioHistory(id: number): Promise<void> {
+    await db.delete(portfolioHistory).where(eq(portfolioHistory.id, id));
+  }
+
   async seedUserData(userId: number) {
     // Check if user already has assets
     const existing = await db
