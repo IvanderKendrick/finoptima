@@ -35,6 +35,31 @@ export const assets = pgTable("assets", {
   color: text("color"), // For charts
 });
 
+export const assetReturns = pgTable(
+  "asset_returns",
+  {
+    id: serial("id").primaryKey(),
+
+    assetId: integer("asset_id")
+      .references(() => assets.id, { onDelete: "cascade" })
+      .notNull(),
+
+    userId: integer("user_id")
+      .references(() => users.id)
+      .notNull(),
+
+    month: date("month").notNull(), // e.g. 2024-01-01 (represent month)
+
+    returnPct: doublePrecision("return_pct").notNull(),
+  },
+  (table) => ({
+    uniqueAssetMonth: uniqueIndex("asset_returns_asset_month_idx").on(
+      table.assetId,
+      table.month,
+    ),
+  }),
+);
+
 export const optimizationHistory = pgTable("optimization_history", {
   id: serial("id").primaryKey(),
   userId: integer("user_id")

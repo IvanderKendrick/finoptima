@@ -157,3 +157,74 @@ export function useRecordPortfolioHistory() {
     },
   });
 }
+
+export function useCreateAssetReturns(assetId: number | null) {
+  const queryClient = useQueryClient();
+  const { token } = useAuth();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (data: {
+      returns: { month: string; value: number }[];
+    }) => {
+      if (!assetId) throw new Error("Asset ID missing");
+
+      const res = await fetch(
+        buildUrl(api.assets.returns.create.path, { assetId }),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(data),
+        },
+      );
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to save asset returns");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [api.assets.list.path],
+      });
+
+      toast({
+        title: "Saved",
+        description: "Asset returns saved.",
+      });
+    },
+    onError: (err) => {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+export function useAssetReturns(assetId: number | null, enabled = true) {
+  const { token } = useAuth();
+
+  return useQuery({
+    queryKey: ["asset-returns", assetId],
+    queryFn: async () => {
+      if (!assetId) throw new Error("Asset ID missing");
+
+      const res = await fetch(
+        buildUrl(api.assets.returns.get.path, { assetId }),
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      if (!res.ok) throw new Error("Failed to fetch asset returns");
+
+      return api.assets.returns.get.responses[200].parse(await res.json());
+    },
+    enabled: !!token && !!assetId && enabled,
+  });
+}

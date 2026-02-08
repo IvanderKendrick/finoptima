@@ -140,6 +140,48 @@ export async function registerRoutes(
   });
 
   app.post(
+    api.assets.returns.create.path,
+    authenticateToken,
+    async (req: any, res) => {
+      try {
+        const { assetId } = req.params;
+        const input = api.assets.returns.create.input.parse(req.body);
+
+        await storage.createAssetReturns({
+          assetId: Number(assetId),
+          userId: req.user.id,
+          returns: input.returns,
+        });
+
+        return res.sendStatus(204);
+      } catch (err) {
+        if (err instanceof z.ZodError) {
+          return res.status(400).json({ message: err.errors[0].message });
+        }
+        res.status(500).json({ message: "Internal server error" });
+      }
+    },
+  );
+
+  app.get(
+    api.assets.returns.get.path,
+    authenticateToken,
+    async (req: any, res) => {
+      const assetId = Number(req.params.assetId);
+
+      // verify ownership via asset
+      const asset = await storage.getAsset(assetId);
+      if (!asset || asset.userId !== req.user.id) {
+        return res.status(404).json({ message: "Asset not found" });
+      }
+
+      const returns = await storage.getAssetReturns(assetId);
+
+      return res.json({ returns });
+    },
+  );
+
+  app.post(
     api.portfolio.recordHistory.path,
     authenticateToken,
     async (req: any, res) => {

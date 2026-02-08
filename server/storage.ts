@@ -2,6 +2,7 @@ import { db } from "./db";
 import {
   users,
   assets,
+  assetReturns,
   optimizationHistory,
   portfolioHistory,
   portfolioMetrics,
@@ -86,6 +87,45 @@ export class DatabaseStorage implements IStorage {
   async createAsset(asset: InsertAsset & { userId: number }): Promise<Asset> {
     const [newAsset] = await db.insert(assets).values(asset).returning();
     return newAsset;
+  }
+
+  async createAssetReturns(input: {
+    assetId: number;
+    userId: number;
+    returns: { month: string; value: number }[];
+  }): Promise<void> {
+    // optional: hapus data lama dulu
+    await db
+      .delete(assetReturns)
+      .where(eq(assetReturns.assetId, input.assetId));
+
+    // insert batch
+    await db.insert(assetReturns).values(
+      input.returns.map((r) => ({
+        assetId: input.assetId,
+        userId: input.userId,
+        month: `${r.month}-01`, // <-- STRING, bukan Date
+        returnPct: r.value,
+      })),
+    );
+  }
+
+  async getAssetReturns(
+    assetId: number,
+  ): Promise<{ month: string; value: number }[]> {
+    const rows = await db
+      .select({
+        month: assetReturns.month,
+        value: assetReturns.returnPct,
+      })
+      .from(assetReturns)
+      .where(eq(assetReturns.assetId, assetId))
+      .orderBy(assetReturns.month);
+
+    return rows.map((r) => ({
+      month: r.month, // sudah string YYYY-MM-DD
+      value: r.value,
+    }));
   }
 
   async createOrUpdatePortfolioHistory(data: {

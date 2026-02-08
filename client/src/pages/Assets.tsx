@@ -41,7 +41,9 @@ import {
   Trash2,
   WalletMinimal,
   Camera,
+  BarChart2,
 } from "lucide-react";
+import AssetReturnsDialog from "@/components/AssetReturnsDialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertAssetSchema, type Asset } from "@shared/schema";
@@ -59,6 +61,8 @@ export default function Assets() {
   const { data: assets, isLoading } = useAssets();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+  const [returnsAssetId, setReturnsAssetId] = useState<number | null>(null);
+  const [returnsOpen, setReturnsOpen] = useState(false);
 
   const createMutation = useCreateAsset();
   const updateMutation = useUpdateAsset();
@@ -370,6 +374,18 @@ export default function Assets() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-8 w-8 text-slate-500 hover:text-sky-600"
+                          onClick={() => {
+                            setReturnsAssetId(asset.id);
+                            setReturnsOpen(true);
+                          }}
+                          title="Manage monthly returns"
+                        >
+                          <BarChart2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-8 w-8 text-slate-500 hover:text-red-500"
                           onClick={() => handleDelete(asset.id)}
                         >
@@ -384,6 +400,14 @@ export default function Assets() {
           </Table>
         </CardContent>
       </Card>
+      <AssetReturnsDialog
+        assetId={returnsAssetId}
+        open={returnsOpen}
+        onOpenChange={(v) => {
+          setReturnsOpen(v);
+          if (!v) setReturnsAssetId(null);
+        }}
+      />
     </Layout>
   );
 }

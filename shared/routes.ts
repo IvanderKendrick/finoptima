@@ -127,6 +127,41 @@ export const api = {
         404: errorSchemas.notFound,
       },
     },
+    returns: {
+      get: {
+        method: "GET" as const,
+        path: "/api/assets/:assetId/returns",
+        responses: {
+          200: z.object({
+            returns: z.array(
+              z.object({
+                month: z.string(), // YYYY-MM
+                value: z.number(),
+              }),
+            ),
+          }),
+          404: errorSchemas.notFound,
+        },
+      },
+      create: {
+        method: "POST" as const,
+        path: "/api/assets/:assetId/returns",
+        input: z.object({
+          returns: z
+            .array(
+              z.object({
+                month: z.string(), // YYYY-MM
+                value: z.number(),
+              }),
+            )
+            .length(12),
+        }),
+        responses: {
+          204: z.void(),
+          400: errorSchemas.validation,
+        },
+      },
+    },
   },
   portfolio: {
     recordHistory: {
