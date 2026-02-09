@@ -16,7 +16,7 @@ import {
   type HistoryPoint,
   type FrontierPoint,
 } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -126,6 +126,20 @@ export class DatabaseStorage implements IStorage {
       month: r.month, // sudah string YYYY-MM-DD
       value: r.value,
     }));
+  }
+
+  async getAssetMonthlyReturns(assetIds: number[]) {
+    const rows = await db
+      .select({
+        assetId: assetReturns.assetId,
+        month: assetReturns.month,
+        value: assetReturns.returnPct,
+      })
+      .from(assetReturns)
+      .where(inArray(assetReturns.assetId, assetIds))
+      .orderBy(assetReturns.month);
+
+    return rows;
   }
 
   async createOrUpdatePortfolioHistory(data: {

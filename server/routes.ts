@@ -246,6 +246,8 @@ export async function registerRoutes(
     api.optimization.run.path,
     authenticateToken,
     async (req: any, res) => {
+      const RISK_FREE_RATE = 0.03; // 3% annual
+
       try {
         const input = api.optimization.run.input.parse(req.body);
         const userAssets = await storage.getAssets(req.user.id);
@@ -257,72 +259,102 @@ export async function registerRoutes(
           return res.status(400).json({ message: "No assets selected" });
         }
 
-        // Mock MVO Calculation
-        // In reality, this would involve matrix multiplication of covariance matrix
-        const count = selectedAssets.length;
-        const equalWeight = 100 / count;
-        const weights: Record<string, number> = {};
+        const assetIds = selectedAssets.map((a) => a.id);
 
-        let totalReturn = 0;
-        let totalRisk = 0;
+        // 1. Load historical monthly returns
+        const rows = await storage.getAssetMonthlyReturns(assetIds);
+        const grouped = groupByAsset(rows);
 
-        selectedAssets.forEach((asset) => {
-          // Simple random optimization simulation
-          // Slightly vary weights based on return/risk ratio
-          const ratio = asset.expectedReturn / asset.risk;
-          const adjustedWeight = equalWeight * (1 + (ratio - 1) * 0.2); // slight bias to better assets
-          weights[asset.symbol] = Number(adjustedWeight.toFixed(2));
+        // 2. Asset-level stats
+        const stats = selectedAssets.map((asset) => {
+          const monthly = grouped.get(asset.id);
 
-          totalReturn += (asset.expectedReturn * adjustedWeight) / 100;
+          if (!monthly || monthly.length < 12) {
+            throw new Error(`Asset ${asset.symbol} has insufficient data`);
+          }
+
+          const muMonthly = mean(monthly);
+          const sigmaMonthly = stdDev(monthly);
+
+          return {
+            asset,
+            monthly,
+            expectedReturn: muMonthly * 12,
+            risk: sigmaMonthly * Math.sqrt(12),
+          };
         });
 
-        // Normalize weights to sum to 100
-        const weightSum = Object.values(weights).reduce((a, b) => a + b, 0);
-        Object.keys(weights).forEach((key) => {
-          weights[key] = Number(((weights[key] / weightSum) * 100).toFixed(2));
+        // 3. Covariance matrix (monthly)
+        const covMatrix = covarianceMatrix(
+          stats.map((s) => s.asset.id),
+          new Map(stats.map((s) => [s.asset.id, s.monthly])),
+        );
+
+        // 4. Generate weight combinations
+        const mu = stats.map((s) => s.expectedReturn);
+        const weightVectors = generateWeights(stats.length, 0.1);
+
+        // 5–6. Efficient frontier
+        const frontier = weightVectors.map((w) => {
+          const ret = portfolioReturn(w, mu);
+          const risk = portfolioRisk(w, covMatrix);
+
+          return {
+            weights: w,
+            expectedReturn: ret,
+            risk,
+            // sharpeRatio: ret / risk,
+            sharpeRatio: (ret - RISK_FREE_RATE) / risk,
+          };
         });
 
-        // Portfolio Risk (simplified: weighted avg risk * diversification factor)
-        // Diversification reduces risk
-        const diversificationFactor = 1 - Math.log(count) * 0.15;
-        const avgRisk =
-          selectedAssets.reduce((sum, a) => sum + a.risk, 0) / count;
-        totalRisk = Number((avgRisk * diversificationFactor).toFixed(2));
-        totalReturn = Number(totalReturn.toFixed(2));
-        const sharpeRatio = Number((totalReturn / totalRisk).toFixed(2));
+        // Efficient Frontier
+        const efficientFrontier = buildEfficientFrontier(frontier);
 
-        // Generate Frontier Points
-        const frontier = [];
-        for (let i = 0; i < 20; i++) {
-          const r = totalRisk * (0.5 + i * 0.1);
-          frontier.push({
-            risk: Number(r.toFixed(2)),
-            return: Number((totalReturn * (0.5 + i * 0.1) * 0.9).toFixed(2)), // Curve
-            sharpeRatio: 0,
-            isOptimal: i === 5, // fake optimal point
-          });
-        }
+        // 7. Pick optimal portfolio (max Sharpe)
+        // const optimal = frontier.reduce((best, p) =>
+        const optimal = efficientFrontier.reduce((best, p) =>
+          p.sharpeRatio > best.sharpeRatio ? p : best,
+        );
 
-        // Save History
-        await storage.createOptimizationHistory(req.user.id, {
-          parameters: JSON.stringify(input),
-          return: totalReturn,
-          risk: totalRisk,
-          sharpeRatio: sharpeRatio,
-          results: JSON.stringify(weights),
+        // 8. Map weights to asset symbols
+        const optimalWeights: Record<string, number> = {};
+        stats.forEach((s, i) => {
+          optimalWeights[s.asset.symbol] = Number(
+            (optimal.weights[i] * 100).toFixed(2),
+          );
         });
 
-        res.json({
-          expectedReturn: totalReturn,
-          risk: totalRisk,
-          sharpeRatio: sharpeRatio,
-          weights: weights,
-          frontier: frontier,
+        // 9. Respond ONCE
+        return res.json({
+          expectedReturn: Number(optimal.expectedReturn.toFixed(2)),
+          risk: Number(optimal.risk.toFixed(2)),
+          sharpeRatio: Number(optimal.sharpeRatio.toFixed(2)),
+          riskFreeRate: RISK_FREE_RATE,
+
+          weights: optimalWeights,
+
+          efficientFrontier: efficientFrontier.map((p) => ({
+            expectedReturn: Number(p.expectedReturn.toFixed(2)),
+            risk: Number(p.risk.toFixed(2)),
+          })),
+
+          frontier: frontier.map((p) => ({
+            expectedReturn: Number(p.expectedReturn.toFixed(2)),
+            risk: Number(p.risk.toFixed(2)),
+          })),
+
+          assets: stats.map((s) => ({
+            symbol: s.asset.symbol,
+            expectedReturn: Number(s.expectedReturn.toFixed(2)),
+            risk: Number(s.risk.toFixed(2)),
+          })),
         });
       } catch (err) {
         if (err instanceof z.ZodError) {
           return res.status(400).json({ message: err.errors[0].message });
         }
+        console.error(err);
         res.status(500).json({ message: "Internal server error" });
       }
     },
@@ -367,4 +399,107 @@ export async function registerRoutes(
   );
 
   return httpServer;
+}
+
+function groupByAsset(rows: { assetId: number; value: number }[]) {
+  const map = new Map<number, number[]>();
+
+  for (const r of rows) {
+    if (!map.has(r.assetId)) map.set(r.assetId, []);
+    map.get(r.assetId)!.push(r.value);
+  }
+
+  return map;
+}
+
+function mean(arr: number[]) {
+  return arr.reduce((a, b) => a + b, 0) / arr.length;
+}
+
+function stdDev(arr: number[]) {
+  const m = mean(arr);
+  const variance =
+    arr.reduce((sum, x) => sum + Math.pow(x - m, 2), 0) / arr.length;
+  return Math.sqrt(variance);
+}
+
+function covariance(a: number[], b: number[]) {
+  const meanA = mean(a);
+  const meanB = mean(b);
+
+  let sum = 0;
+  for (let i = 0; i < a.length; i++) {
+    sum += (a[i] - meanA) * (b[i] - meanB);
+  }
+
+  return sum / a.length;
+}
+
+function covarianceMatrix(assets: number[], data: Map<number, number[]>) {
+  const matrix: number[][] = [];
+
+  for (let i = 0; i < assets.length; i++) {
+    matrix[i] = [];
+    for (let j = 0; j < assets.length; j++) {
+      const cov = covariance(data.get(assets[i])!, data.get(assets[j])!);
+      matrix[i][j] = cov;
+    }
+  }
+
+  return matrix;
+}
+
+function generateWeights(n: number, step = 0.1): number[][] {
+  const results: number[][] = [];
+
+  function backtrack(remaining: number, depth: number, current: number[]) {
+    if (depth === n - 1) {
+      results.push([...current, Number(remaining.toFixed(4))]);
+      return;
+    }
+
+    for (let w = 0; w <= remaining; w += step) {
+      current.push(Number(w.toFixed(4)));
+      backtrack(Number((remaining - w).toFixed(4)), depth + 1, current);
+      current.pop();
+    }
+  }
+
+  backtrack(1, 0, []);
+  return results;
+}
+
+function portfolioReturn(weights: number[], mu: number[]) {
+  return weights.reduce((sum, w, i) => sum + w * mu[i], 0);
+}
+
+function portfolioRisk(weights: number[], cov: number[][]) {
+  let variance = 0;
+
+  for (let i = 0; i < weights.length; i++) {
+    for (let j = 0; j < weights.length; j++) {
+      variance += weights[i] * cov[i][j] * weights[j];
+    }
+  }
+
+  return Math.sqrt(variance);
+}
+
+function buildEfficientFrontier(
+  portfolios: {
+    expectedReturn: number;
+    risk: number;
+    sharpeRatio: number;
+    weights: number[];
+  }[],
+) {
+  return portfolios.filter(
+    (p) =>
+      !portfolios.some(
+        (q) =>
+          q.risk <= p.risk &&
+          q.expectedReturn > p.expectedReturn &&
+          (q.risk < p.risk || q.expectedReturn > p.expectedReturn),
+      ),
+  );
 }
