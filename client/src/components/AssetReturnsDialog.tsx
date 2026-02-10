@@ -123,7 +123,15 @@ export function AssetReturnsDialog({
           )}
 
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onOpenChange(false);
+              }}
+            >
               Cancel
             </Button>
             <Button type="submit">Save</Button>

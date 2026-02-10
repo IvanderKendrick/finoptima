@@ -13,6 +13,38 @@ import {
 // ============================================
 // SHARED ERROR SCHEMAS
 // ============================================
+
+const optimizationResultSchema = z.object({
+  expectedReturn: z.number(),
+  risk: z.number(),
+  sharpeRatio: z.number(),
+  riskFreeRate: z.number(),
+
+  weights: z.record(z.number()),
+
+  frontier: z.array(
+    z.object({
+      expectedReturn: z.number(),
+      risk: z.number(),
+    }),
+  ),
+
+  efficientFrontier: z.array(
+    z.object({
+      expectedReturn: z.number(),
+      risk: z.number(),
+    }),
+  ),
+
+  assets: z.array(
+    z.object({
+      symbol: z.string(),
+      expectedReturn: z.number(),
+      risk: z.number(),
+    }),
+  ),
+});
+
 export const errorSchemas = {
   notFound: z.object({
     message: z.string(),
@@ -195,23 +227,9 @@ export const api = {
       path: "/api/optimization/run",
       input: z.object({
         assetIds: z.array(z.number()),
-        riskTolerance: z.number().optional(),
       }),
       responses: {
-        200: z.object({
-          expectedReturn: z.number(),
-          risk: z.number(),
-          sharpeRatio: z.number(),
-          weights: z.record(z.string(), z.number()), // symbol -> weight
-          frontier: z.array(
-            z.object({
-              risk: z.number(),
-              return: z.number(),
-              sharpeRatio: z.number(),
-              isOptimal: z.boolean(),
-            }),
-          ),
-        }),
+        200: optimizationResultSchema,
       },
     },
     history: {

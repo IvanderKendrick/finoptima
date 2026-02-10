@@ -153,10 +153,3 @@ export type InsertAsset = z.infer<typeof insertAssetSchema>;
 export type LoginRequest = Pick<InsertUser, "email" | "password">;
 export type RegisterRequest = InsertUser;
 export type AuthResponse = { user: Omit<User, "password">; token: string };
-
-// Optimization types
-export type OptimizationRequest = {
-  assetIds: number[];
-  weights?: Record<string, number>; // Optional manual weights
-  riskTolerance?: number;
-};

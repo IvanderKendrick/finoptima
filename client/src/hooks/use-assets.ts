@@ -167,7 +167,7 @@ export function useCreateAssetReturns(assetId: number | null) {
     mutationFn: async (data: {
       returns: { month: string; value: number }[];
     }) => {
-      if (!assetId) throw new Error("Asset ID missing");
+      if (assetId == null) throw new Error("Asset ID missing");
 
       const res = await fetch(
         buildUrl(api.assets.returns.create.path, { assetId }),
@@ -187,6 +187,10 @@ export function useCreateAssetReturns(assetId: number | null) {
       }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["asset-returns", assetId],
+      });
+
       queryClient.invalidateQueries({
         queryKey: [api.assets.list.path],
       });

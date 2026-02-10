@@ -269,8 +269,20 @@ export async function registerRoutes(
         const stats = selectedAssets.map((asset) => {
           const monthly = grouped.get(asset.id);
 
-          if (!monthly || monthly.length < 12) {
-            throw new Error(`Asset ${asset.symbol} has insufficient data`);
+          if (!monthly || monthly.length === 0) {
+            const err = new Error(
+              `Historical price data for asset ${asset.symbol} not found`,
+            );
+            (err as any).statusCode = 404;
+            throw err;
+          }
+
+          if (monthly.length < 12) {
+            const err = new Error(
+              `Insufficient historical data for asset ${asset.symbol}`,
+            );
+            (err as any).statusCode = 400;
+            throw err;
           }
 
           const muMonthly = mean(monthly);
@@ -350,12 +362,17 @@ export async function registerRoutes(
             risk: Number(s.risk.toFixed(2)),
           })),
         });
-      } catch (err) {
+      } catch (err: any) {
         if (err instanceof z.ZodError) {
           return res.status(400).json({ message: err.errors[0].message });
         }
+
+        if (err.statusCode) {
+          return res.status(err.statusCode).json({ message: err.message });
+        }
+
         console.error(err);
-        res.status(500).json({ message: "Internal server error" });
+        return res.status(500).json({ message: "Internal server error" });
       }
     },
   );
@@ -451,21 +468,22 @@ function covarianceMatrix(assets: number[], data: Map<number, number[]>) {
 
 function generateWeights(n: number, step = 0.1): number[][] {
   const results: number[][] = [];
+  const ticks = Math.round(1 / step); // step 0.1 => 10
 
-  function backtrack(remaining: number, depth: number, current: number[]) {
+  function backtrack(remainingTicks: number, depth: number, current: number[]) {
     if (depth === n - 1) {
-      results.push([...current, Number(remaining.toFixed(4))]);
+      results.push([...current, remainingTicks / ticks]);
       return;
     }
 
-    for (let w = 0; w <= remaining; w += step) {
-      current.push(Number(w.toFixed(4)));
-      backtrack(Number((remaining - w).toFixed(4)), depth + 1, current);
+    for (let t = 0; t <= remainingTicks; t++) {
+      current.push(t / ticks);
+      backtrack(remainingTicks - t, depth + 1, current);
       current.pop();
     }
   }
 
-  backtrack(1, 0, []);
+  backtrack(ticks, 0, []);
   return results;
 }
 
