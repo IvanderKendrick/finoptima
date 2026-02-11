@@ -141,7 +141,6 @@ export const insertPointSchema = createInsertSchema(
 export type User = typeof users.$inferSelect;
 export type Asset = typeof assets.$inferSelect;
 export type Optimization = typeof optimizationHistory.$inferSelect;
-// export type PortfolioHistory = typeof portfolioHistory.$inferSelect; ?
 export type Metric = typeof portfolioMetrics.$inferSelect;
 export type HistoryPoint = typeof portfolioHistory.$inferSelect;
 export type FrontierPoint = typeof efficientFrontierPoints.$inferSelect;

@@ -337,11 +337,24 @@ export async function registerRoutes(
           );
         });
 
+        // ✅ Save optimization result to DB
+        const expectedReturn = Number(optimal.expectedReturn.toFixed(2));
+        const risk = Number(optimal.risk.toFixed(2));
+        const sharpeRatio = Number(optimal.sharpeRatio.toFixed(2));
+
+        await storage.createOptimizationHistory(req.user.id, {
+          parameters: JSON.stringify(input),
+          return: expectedReturn,
+          risk,
+          sharpeRatio,
+          results: JSON.stringify(optimalWeights),
+        });
+
         // 9. Respond ONCE
         return res.json({
-          expectedReturn: Number(optimal.expectedReturn.toFixed(2)),
-          risk: Number(optimal.risk.toFixed(2)),
-          sharpeRatio: Number(optimal.sharpeRatio.toFixed(2)),
+          expectedReturn,
+          risk,
+          sharpeRatio,
           riskFreeRate: RISK_FREE_RATE,
 
           weights: optimalWeights,

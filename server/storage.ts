@@ -146,7 +146,7 @@ export class DatabaseStorage implements IStorage {
     userId: number;
     date: string;
     value: number;
-  }): Promise<PortfolioHistory> {
+  }): Promise<HistoryPoint> {
     const [history] = await db
       .insert(portfolioHistory)
       .values(data)
