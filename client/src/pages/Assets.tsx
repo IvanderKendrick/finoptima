@@ -219,36 +219,7 @@ export default function Assets() {
                     </p>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="expectedReturn">Return (%)</Label>
-                    <Input
-                      id="expectedReturn"
-                      type="number"
-                      step="0.1"
-                      {...form.register("expectedReturn")}
-                    />
-                    {form.formState.errors.expectedReturn && (
-                      <p className="text-xs text-red-500">
-                        {form.formState.errors.expectedReturn.message}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="risk">Risk (%)</Label>
-                    <Input
-                      id="risk"
-                      type="number"
-                      step="0.1"
-                      {...form.register("risk")}
-                    />
-                    {form.formState.errors.risk && (
-                      <p className="text-xs text-red-500">
-                        {form.formState.errors.risk.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="color">Color</Label>
 

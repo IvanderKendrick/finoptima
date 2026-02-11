@@ -147,6 +147,29 @@ export async function registerRoutes(
         const { assetId } = req.params;
         const input = api.assets.returns.create.input.parse(req.body);
 
+        // Mengambil data returns langsung dari input
+        const returns = input.returns.map((r: { value: number }) => r.value);
+
+        // Cek jika data returns ada minimal 12 bulan
+        if (returns.length < 12) {
+          return res.status(400).json({ message: "Insufficient returns data" });
+        }
+
+        // Hitung expectedReturn (mean) dan risk (stdDev)
+        const expectedReturn = mean(returns) * 12; // Rata-rata pengembalian
+        const risk = stdDev(returns) * Math.sqrt(12); // Standar deviasi
+
+        // Batasi angka desimal menjadi 1 angka di belakang koma
+        const expectedReturnRounded = parseFloat(expectedReturn.toFixed(2));
+        const riskRounded = parseFloat(risk.toFixed(2));
+
+        // Simpan hasil perhitungan expectedReturn dan risk ke database
+        await storage.updateAssetRiskAndReturn(
+          Number(assetId),
+          expectedReturnRounded,
+          riskRounded,
+        );
+
         await storage.createAssetReturns({
           assetId: Number(assetId),
           userId: req.user.id,

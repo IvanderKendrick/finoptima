@@ -142,6 +142,20 @@ export class DatabaseStorage implements IStorage {
     return rows;
   }
 
+  async updateAssetRiskAndReturn(
+    assetId: number,
+    expectedReturn: number,
+    risk: number,
+  ): Promise<void> {
+    await db
+      .update(assets)
+      .set({
+        expectedReturn,
+        risk,
+      })
+      .where(eq(assets.id, assetId));
+  }
+
   async createOrUpdatePortfolioHistory(data: {
     userId: number;
     date: string;
