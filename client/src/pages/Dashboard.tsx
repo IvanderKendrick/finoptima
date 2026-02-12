@@ -219,17 +219,10 @@ export default function Dashboard() {
                       }}
                     />
                     <Scatter
-                      name="Efficient Frontier"
-                      data={data.frontier.filter((p) => !p.isOptimal)}
-                      fill="#CBD5E1"
-                      line={false}
-                    />
-                    <Scatter
                       name="Optimal Portfolio"
-                      data={data.frontier.filter((p) => p.isOptimal)}
+                      data={data.frontier}
                       fill="#10B981"
                       shape="star"
-                      s={200}
                     />
                   </ScatterChart>
                 </ResponsiveContainer>

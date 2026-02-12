@@ -8,6 +8,8 @@ import {
   LogOut,
   WalletMinimal,
   ChevronDown,
+  LineChart,
+  BarChart3,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth-provider";
 import { cn } from "@/lib/utils";
@@ -32,11 +34,13 @@ const navItems = [
     children: [
       {
         href: "/history/optimization",
-        label: "Optimization History",
+        label: "Optimization",
+        icon: LineChart,
       },
       {
         href: "/history/portfolio",
-        label: "Portfolio History",
+        label: "Portfolio",
+        icon: BarChart3,
       },
     ],
   },
@@ -96,7 +100,13 @@ export function Sidebar() {
                   />
                 </button>
 
-                {isHistoryOpen && (
+                {/* Animated submenu container */}
+                <div
+                  className="overflow-hidden transition-all duration-300 ease-in-out"
+                  style={{
+                    maxHeight: isHistoryOpen ? "200px" : "0px",
+                  }}
+                >
                   <div className="mt-1 ml-8 space-y-1">
                     {item.children.map((child) => {
                       const isActive = location === child.href;
@@ -104,19 +114,20 @@ export function Sidebar() {
                         <Link key={child.href} href={child.href}>
                           <div
                             className={cn(
-                              "px-3 py-2 rounded-lg text-sm transition-all cursor-pointer",
+                              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm cursor-pointer",
                               isActive
                                 ? "bg-emerald-500/10 text-emerald-400"
                                 : "text-slate-400 hover:text-white hover:bg-slate-800",
                             )}
                           >
+                            <child.icon className="h-4 w-4" />
                             {child.label}
                           </div>
                         </Link>
                       );
                     })}
                   </div>
-                )}
+                </div>
               </div>
             );
           }

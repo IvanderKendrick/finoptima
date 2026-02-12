@@ -119,7 +119,7 @@ export const api = {
           assets: z.array(z.custom<typeof assets.$inferSelect>()),
           history: z.array(z.custom<typeof portfolioHistory.$inferSelect>()),
           frontier: z.array(
-            z.custom<typeof efficientFrontierPoints.$inferSelect>(),
+            z.custom<typeof optimizationHistory.$inferSelect>(),
           ),
         }),
       },

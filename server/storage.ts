@@ -16,7 +16,7 @@ import {
   type HistoryPoint,
   type FrontierPoint,
 } from "@shared/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, inArray, desc } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -37,7 +37,7 @@ export interface IStorage {
     metrics: Metric[];
     assets: Asset[];
     history: HistoryPoint[];
-    frontier: FrontierPoint[];
+    frontier: Optimization[];
   }>;
 
   // Optimization operations
@@ -47,9 +47,6 @@ export interface IStorage {
   ): Promise<Optimization>;
   getOptimizationHistory(userId: number): Promise<Optimization[]>;
   deleteOptimizationHistory(id: number): Promise<void>;
-
-  // Seed data for new users
-  seedUserData(userId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -203,9 +200,17 @@ export class DatabaseStorage implements IStorage {
     // In schema.ts, I made userId optional for metrics/history/frontier.
 
     const [metricsData, historyData, frontierData] = await Promise.all([
-      db.select().from(portfolioMetrics), // Returns all (demo data)
-      db.select().from(portfolioHistory).orderBy(portfolioHistory.date), // Returns all (demo data)
-      db.select().from(efficientFrontierPoints), // Returns all (demo data)
+      db.select().from(portfolioMetrics),
+      db
+        .select()
+        .from(portfolioHistory)
+        .where(eq(portfolioHistory.userId, userId))
+        .orderBy(portfolioHistory.date),
+      db
+        .select()
+        .from(optimizationHistory)
+        .where(eq(optimizationHistory.userId, userId)) // Scope jika userId ada di schema optimizationHistory
+        .orderBy(desc(optimizationHistory.date)), // Urutkan berdasarkan tanggal terbaru (descending)
     ]);
 
     return {
@@ -250,74 +255,6 @@ export class DatabaseStorage implements IStorage {
 
   async deletePortfolioHistory(id: number): Promise<void> {
     await db.delete(portfolioHistory).where(eq(portfolioHistory.id, id));
-  }
-
-  async seedUserData(userId: number) {
-    // Check if user already has assets
-    const existing = await db
-      .select()
-      .from(assets)
-      .where(eq(assets.userId, userId))
-      .limit(1);
-    if (existing.length > 0) return;
-
-    // Seed Default Assets for new user
-    await db.insert(assets).values([
-      {
-        userId,
-        symbol: "BBCA",
-        name: "Bank Central Asia",
-        value: 45000000,
-        expectedReturn: 12.5,
-        risk: 8.5,
-        color: "#059669",
-      },
-      {
-        userId,
-        symbol: "BBRI",
-        name: "Bank Rakyat Indonesia",
-        value: 30000000,
-        expectedReturn: 14.2,
-        risk: 10.1,
-        color: "#10B981",
-      },
-      {
-        userId,
-        symbol: "TLKM",
-        name: "Telkom Indonesia",
-        value: 20000000,
-        expectedReturn: 8.5,
-        risk: 6.2,
-        color: "#34D399",
-      },
-      {
-        userId,
-        symbol: "BMRI",
-        name: "Bank Mandiri",
-        value: 15000000,
-        expectedReturn: 13.8,
-        risk: 9.8,
-        color: "#6EE7B7",
-      },
-      {
-        userId,
-        symbol: "ASII",
-        name: "Astra International",
-        value: 10000000,
-        expectedReturn: 10.5,
-        risk: 7.5,
-        color: "#A7F3D0",
-      },
-      {
-        userId,
-        symbol: "UNVR",
-        name: "Unilever",
-        value: 5000000,
-        expectedReturn: 7.2,
-        risk: 5.5,
-        color: "#D1FAE5",
-      },
-    ]);
   }
 }
 

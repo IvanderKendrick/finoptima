@@ -42,9 +42,6 @@ export async function registerRoutes(
       // But typically we'd use bcrypt.
       const user = await storage.createUser(input);
 
-      // Seed data for new user
-      await storage.seedUserData(user.id);
-
       const token = jwt.sign(
         { id: user.id, email: user.email },
         process.env.SESSION_SECRET || "secret",
