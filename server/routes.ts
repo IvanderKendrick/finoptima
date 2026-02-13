@@ -327,16 +327,26 @@ export async function registerRoutes(
         const weightVectors = generateWeights(stats.length, 0.1);
 
         // 5–6. Efficient frontier
+        const eps = 1e-12;
+        const MAX_SHARPE = 999;
+
         const frontier = weightVectors.map((w) => {
-          const ret = portfolioReturn(w, mu);
-          const risk = portfolioRisk(w, covMatrix);
+          const ret = portfolioReturn(w, mu); // sudah annual karena mu annual
+          const riskMonthly = portfolioRisk(w, covMatrix); // masih monthly karena cov bulanan
+          const riskAnnual = riskMonthly * Math.sqrt(12); // ✅ annualisasi risk
+
+          let sharpeRatio: number;
+          if (riskAnnual < eps) {
+            sharpeRatio = ret > RISK_FREE_RATE ? MAX_SHARPE : -MAX_SHARPE;
+          } else {
+            sharpeRatio = (ret - RISK_FREE_RATE) / riskAnnual;
+          }
 
           return {
             weights: w,
             expectedReturn: ret,
-            risk,
-            // sharpeRatio: ret / risk,
-            sharpeRatio: (ret - RISK_FREE_RATE) / risk,
+            risk: riskAnnual, // ✅ pakai annual risk
+            sharpeRatio,
           };
         });
 
