@@ -239,6 +239,13 @@ export const api = {
         200: z.array(z.custom<typeof optimizationHistory.$inferSelect>()),
       },
     },
+    historyDetail: {
+      method: "GET" as const,
+      path: "/api/optimization/history/:id",
+      responses: {
+        200: z.custom<typeof optimizationHistory.$inferSelect>(),
+      },
+    },
     deleteHistory: {
       method: "DELETE" as const,
       path: "/api/optimization/history/:id",

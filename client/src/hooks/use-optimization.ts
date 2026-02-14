@@ -116,3 +116,26 @@ export function useDeleteHistory() {
     },
   });
 }
+
+export function useOptimizationHistoryDetail(id: number) {
+  const { token } = useAuth();
+
+  return useQuery({
+    queryKey: [api.optimization.historyDetail.path, id],
+    enabled: !!token && Number.isFinite(id),
+    queryFn: async () => {
+      const path = api.optimization.historyDetail.path.replace(
+        ":id",
+        String(id),
+      );
+      const res = await fetch(path, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok)
+        throw new Error("Failed to fetch optimization history detail");
+      return api.optimization.historyDetail.responses[200].parse(
+        await res.json(),
+      );
+    },
+  });
+}

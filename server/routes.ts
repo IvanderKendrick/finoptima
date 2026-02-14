@@ -430,6 +430,26 @@ export async function registerRoutes(
   );
 
   app.get(
+    api.optimization.historyDetail.path,
+    authenticateToken,
+    async (req: any, res) => {
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id)) {
+        return res.status(400).json({ message: "Invalid id" });
+      }
+
+      const row = await storage.getOptimizationHistoryById(req.user.id, id);
+      if (!row) {
+        return res
+          .status(404)
+          .json({ message: "Optimization history not found" });
+      }
+
+      return res.json(row);
+    },
+  );
+
+  app.get(
     api.portfolio.history.path,
     authenticateToken,
     async (req: any, res) => {

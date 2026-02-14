@@ -16,7 +16,7 @@ import {
   type HistoryPoint,
   type FrontierPoint,
 } from "@shared/schema";
-import { eq, inArray, desc } from "drizzle-orm";
+import { eq, inArray, desc, and } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -47,6 +47,7 @@ export interface IStorage {
   ): Promise<Optimization>;
   getOptimizationHistory(userId: number): Promise<Optimization[]>;
   deleteOptimizationHistory(id: number): Promise<void>;
+  getOptimizationHistoryById(userId: number, id: number): Promise<Optimization>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -309,6 +310,21 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(optimizationHistory)
       .where(eq(optimizationHistory.userId, userId));
+  }
+
+  async getOptimizationHistoryById(userId: number, id: number) {
+    const rows = await db
+      .select()
+      .from(optimizationHistory)
+      .where(
+        and(
+          eq(optimizationHistory.userId, userId),
+          eq(optimizationHistory.id, id),
+        ),
+      )
+      .limit(1);
+
+    return rows[0] ?? null;
   }
 
   async getPortfolioHistory(userId: number): Promise<HistoryPoint[]> {
