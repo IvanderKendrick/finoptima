@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Trash2, CalendarClock } from "lucide-react";
+import { Loader2, Trash2, CalendarClock, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import {
   AlertDialog,
@@ -26,11 +26,13 @@ import {
   AlertDialogHeader,
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
+import { useLocation } from "wouter";
 
 export default function PortfolioHistory() {
   const { data: history, isLoading } = usePortfolioHistory();
   const deleteMutation = useDeletePortfolioHistory();
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [, navigate] = useLocation();
 
   const handleDelete = (id: number) => {
     setDeleteId(id);
@@ -95,14 +97,31 @@ export default function PortfolioHistory() {
                     </TableCell>
 
                     <TableCell className="text-right pr-6">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-400 hover:text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() =>
+                            navigate(`/history/portfolio/${item.id}`)
+                          }
+                          title="View details"
+                          aria-label="View details"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleDelete(item.id)}
+                          title="Delete"
+                          aria-label="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

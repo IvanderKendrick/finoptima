@@ -48,6 +48,12 @@ export interface IStorage {
   getOptimizationHistory(userId: number): Promise<Optimization[]>;
   deleteOptimizationHistory(id: number): Promise<void>;
   getOptimizationHistoryById(userId: number, id: number): Promise<Optimization>;
+
+  // Portfolio history operations
+  getPortfolioHistoryById(
+    userId: number,
+    id: number,
+  ): Promise<typeof portfolioHistory.$inferSelect | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -158,17 +164,30 @@ export class DatabaseStorage implements IStorage {
     userId: number;
     date: string;
     value: number;
+    allocations: string;
   }): Promise<HistoryPoint> {
     const [history] = await db
       .insert(portfolioHistory)
       .values(data)
       .onConflictDoUpdate({
         target: [portfolioHistory.userId, portfolioHistory.date],
-        set: { value: data.value },
+        set: { value: data.value, allocations: data.allocations },
       })
       .returning();
 
     return history;
+  }
+
+  async getPortfolioHistoryById(userId: number, id: number) {
+    const rows = await db
+      .select()
+      .from(portfolioHistory)
+      .where(
+        and(eq(portfolioHistory.userId, userId), eq(portfolioHistory.id, id)),
+      )
+      .limit(1);
+
+    return rows[0] ?? null;
   }
 
   async updateAsset(id: number, asset: Partial<InsertAsset>): Promise<Asset> {

@@ -203,6 +203,7 @@ export const api = {
         201: z.object({
           date: z.string(),
           value: z.number(),
+          allocations: z.record(z.number()),
         }),
       },
     },
@@ -211,6 +212,13 @@ export const api = {
       path: "/api/portfolio/history",
       responses: {
         200: z.array(z.custom<typeof portfolioHistory.$inferSelect>()),
+      },
+    },
+    historyDetail: {
+      method: "GET" as const,
+      path: "/api/portfolio/history/:id",
+      responses: {
+        200: z.custom<typeof portfolioHistory.$inferSelect>(),
       },
     },
     deleteHistory: {

@@ -63,3 +63,20 @@ export function useDeletePortfolioHistory() {
     },
   });
 }
+
+export function usePortfolioHistoryDetail(id: number) {
+  const { token } = useAuth();
+
+  return useQuery({
+    queryKey: [api.portfolio.historyDetail.path, id],
+    enabled: !!token && Number.isFinite(id),
+    queryFn: async () => {
+      const path = api.portfolio.historyDetail.path.replace(":id", String(id));
+      const res = await fetch(path, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to fetch portfolio history detail");
+      return api.portfolio.historyDetail.responses[200].parse(await res.json());
+    },
+  });
+}

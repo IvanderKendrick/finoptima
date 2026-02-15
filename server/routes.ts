@@ -212,19 +212,50 @@ export async function registerRoutes(
         }, 0);
         const today = new Date().toISOString().slice(0, 10);
 
+        const allocations: Record<string, number> = {};
+        if (totalValue > 0) {
+          for (const a of assets) {
+            const w = (a.value / totalValue) * 100;
+            allocations[a.symbol] = Number(w.toFixed(2));
+          }
+        } else {
+          // kalau total 0, tetap kembalikan 0% agar tidak NaN
+          for (const a of assets) allocations[a.symbol] = 0;
+        }
+
         const history = await storage.createOrUpdatePortfolioHistory({
           userId: req.user.id,
           date: today,
           value: totalValue,
+          allocations: JSON.stringify(allocations),
         });
 
         res.status(201).json({
           date: today,
           value: totalValue,
+          allocations,
         });
       } catch (err) {
         res.status(500).json({ message: "Internal server error" });
       }
+    },
+  );
+
+  app.get(
+    api.portfolio.historyDetail.path,
+    authenticateToken,
+    async (req: any, res) => {
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id)) {
+        return res.status(400).json({ message: "Invalid id" });
+      }
+
+      const row = await storage.getPortfolioHistoryById(req.user.id, id);
+      if (!row) {
+        return res.status(404).json({ message: "Portfolio history not found" });
+      }
+
+      return res.json(row);
     },
   );
 

@@ -97,6 +97,7 @@ export const portfolioHistory = pgTable(
       .notNull(),
     date: date("date").notNull(),
     value: doublePrecision("value").notNull(),
+    allocations: text("allocations").notNull().default("{}"),
   },
   (table) => ({
     uniqueUserDate: uniqueIndex("portfolio_history_user_date_idx").on(
