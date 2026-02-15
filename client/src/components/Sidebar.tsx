@@ -190,17 +190,23 @@ export function Sidebar({
       <div
         className={cn(
           "md:hidden fixed inset-0 z-40",
-          mobileOpen ? "block" : "hidden",
+          mobileOpen ? "pointer-events-auto" : "pointer-events-none",
         )}
       >
+        {/* overlay fade */}
         <div
-          className="absolute inset-0 bg-black/40"
+          className={cn(
+            "absolute inset-0 bg-black/40 transition-opacity duration-300 ease-out",
+            mobileOpen ? "opacity-100" : "opacity-0",
+          )}
           onClick={closeMobile}
           aria-hidden="true"
         />
+
+        {/* drawer slide */}
         <div
           className={cn(
-            "absolute left-0 top-0 h-full w-64 transform transition-transform duration-300",
+            "absolute left-0 top-0 h-full w-64 transform will-change-transform transition-transform duration-300 ease-out",
             mobileOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >
