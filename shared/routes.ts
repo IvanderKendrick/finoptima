@@ -1,14 +1,21 @@
 import { z } from "zod";
 import {
   assets,
-  portfolioMetrics,
   portfolioHistory,
-  efficientFrontierPoints,
   optimizationHistory,
   users,
   insertAssetSchema,
   insertUserSchema,
 } from "./schema";
+
+const dashboardMetricSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  label: z.string(),
+  value: z.string(),
+  subValue: z.string(),
+  trend: z.number().nullable(),
+});
 
 // ============================================
 // SHARED ERROR SCHEMAS
@@ -115,7 +122,7 @@ export const api = {
       path: "/api/dashboard",
       responses: {
         200: z.object({
-          metrics: z.array(z.custom<typeof portfolioMetrics.$inferSelect>()),
+          metrics: z.array(dashboardMetricSchema),
           assets: z.array(z.custom<typeof assets.$inferSelect>()),
           history: z.array(z.custom<typeof portfolioHistory.$inferSelect>()),
           frontier: z.array(

@@ -3,7 +3,6 @@ import {
   text,
   serial,
   integer,
-  boolean,
   timestamp,
   doublePrecision,
   date,
@@ -79,15 +78,6 @@ export const optimizationHistory = pgTable("optimization_history", {
 // To support the prompt's request for "History Page" distinct from "Optimization History",
 // we'll assume "optimizationHistory" is what is needed.
 
-export const portfolioMetrics = pgTable("portfolio_metrics", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id), // Optional: user specific
-  label: text("label").notNull(),
-  value: text("value").notNull(),
-  subValue: text("sub_value").notNull(),
-  trend: doublePrecision("trend"),
-});
-
 export const portfolioHistory = pgTable(
   "portfolio_history",
   {
@@ -107,15 +97,6 @@ export const portfolioHistory = pgTable(
   }),
 );
 
-export const efficientFrontierPoints = pgTable("efficient_frontier_points", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id), // Optional: user specific
-  risk: doublePrecision("risk").notNull(),
-  return: doublePrecision("return").notNull(),
-  sharpeRatio: doublePrecision("sharpe_ratio").notNull(),
-  isOptimal: boolean("is_optimal").default(false),
-});
-
 // === BASE SCHEMAS ===
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -128,23 +109,15 @@ export const insertAssetSchema = createInsertSchema(assets).omit({
 export const insertOptimizationSchema = createInsertSchema(
   optimizationHistory,
 ).omit({ id: true, userId: true, date: true });
-export const insertMetricSchema = createInsertSchema(portfolioMetrics).omit({
-  id: true,
-});
 export const insertHistorySchema = createInsertSchema(portfolioHistory).omit({
   id: true,
 });
-export const insertPointSchema = createInsertSchema(
-  efficientFrontierPoints,
-).omit({ id: true });
 
 // === EXPLICIT API CONTRACT TYPES ===
 export type User = typeof users.$inferSelect;
 export type Asset = typeof assets.$inferSelect;
 export type Optimization = typeof optimizationHistory.$inferSelect;
-export type Metric = typeof portfolioMetrics.$inferSelect;
 export type HistoryPoint = typeof portfolioHistory.$inferSelect;
-export type FrontierPoint = typeof efficientFrontierPoints.$inferSelect;
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertAsset = z.infer<typeof insertAssetSchema>;

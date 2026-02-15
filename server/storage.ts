@@ -5,18 +5,23 @@ import {
   assetReturns,
   optimizationHistory,
   portfolioHistory,
-  portfolioMetrics,
-  efficientFrontierPoints,
   type User,
   type InsertUser,
   type Asset,
   type InsertAsset,
   type Optimization,
-  type Metric,
   type HistoryPoint,
-  type FrontierPoint,
 } from "@shared/schema";
 import { eq, inArray, desc, and } from "drizzle-orm";
+
+type DashboardMetric = {
+  id: number;
+  userId: number;
+  label: string;
+  value: string;
+  subValue: string;
+  trend: number | null;
+};
 
 export interface IStorage {
   // User operations
@@ -34,7 +39,7 @@ export interface IStorage {
 
   // Dashboard operations
   getDashboardData(userId: number): Promise<{
-    metrics: Metric[];
+    metrics: DashboardMetric[];
     assets: Asset[];
     history: HistoryPoint[];
     frontier: Optimization[];
@@ -204,11 +209,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDashboardData(userId: number) {
-    // Check if user has assets
     const userAssets = await this.getAssets(userId);
 
-    const [metricsData, historyData, frontierData] = await Promise.all([
-      db.select().from(portfolioMetrics),
+    const [historyData, frontierData] = await Promise.all([
       db
         .select()
         .from(portfolioHistory)
@@ -217,93 +220,89 @@ export class DatabaseStorage implements IStorage {
       db
         .select()
         .from(optimizationHistory)
-        .where(eq(optimizationHistory.userId, userId)) // Scope jika userId ada di schema optimizationHistory
-        .orderBy(desc(optimizationHistory.date)), // Urutkan berdasarkan tanggal terbaru (descending)
+        .where(eq(optimizationHistory.userId, userId))
+        .orderBy(desc(optimizationHistory.date)),
     ]);
 
-    // Metric 1: Total Portfolio Value
-    const portfolioHistoryData = historyData;
-    const latestPortfolio =
-      portfolioHistoryData[portfolioHistoryData.length - 1]; // Latest portfolio value
-    const earliestPortfolio = portfolioHistoryData[0]; // Earliest portfolio value
+    const metrics: DashboardMetric[] = [];
 
-    const totalValue = latestPortfolio.value;
-    const initialValue = earliestPortfolio.value;
+    // ===== Metric 1: Total Portfolio Value =====
+    if (historyData.length >= 1) {
+      const latest = historyData[historyData.length - 1];
+      const earliest = historyData[0];
 
-    // Calculate subValue (total change since the earliest record)
-    const subValue = totalValue - initialValue;
+      const totalValue = latest.value;
+      const initialValue = earliest.value;
 
-    // Calculate trend (percentage change from earliest to latest)
-    const trend = ((totalValue - initialValue) / initialValue) * 100;
+      const subValue = totalValue - initialValue;
+      const trend =
+        initialValue !== 0
+          ? ((totalValue - initialValue) / initialValue) * 100
+          : 0;
 
-    // Add new metric for Total Portfolio Value
-    const totalPortfolioValueMetric = {
-      id: 1, // Make sure the ID is unique for each metric
-      userId: userId,
-      label: "Total Portfolio Value",
-      value: totalValue.toLocaleString(), // Format as currency or number
-      subValue:
-        subValue >= 0
-          ? `+${subValue.toLocaleString()}`
-          : `${subValue.toLocaleString()}`,
-      trend: trend, // Format trend as percentage with two decimals
-    };
+      metrics.push({
+        id: 1,
+        userId,
+        label: "Total Portfolio Value",
+        value: totalValue.toLocaleString("id-ID"),
+        subValue:
+          subValue >= 0
+            ? `+${subValue.toLocaleString("id-ID")}`
+            : `${subValue.toLocaleString("id-ID")}`,
+        trend,
+      });
+    }
 
-    // Add Metric 2: Expected Return
-    const latestOptimization = frontierData[0]; // Latest optimization data
-    const earliestOptimization = frontierData[frontierData.length - 1]; // Earliest optimization data
+    // ===== Metric 2 & 3: dari optimizationHistory =====
+    if (frontierData.length >= 1) {
+      const latestOpt = frontierData[0];
+      const earliestOpt = frontierData[frontierData.length - 1];
 
-    const expectedReturn = latestOptimization.return;
-    const initialReturn = earliestOptimization.return;
+      // Expected Return
+      const expectedReturn = latestOpt.return;
+      const initialReturn = earliestOpt.return;
+      const returnSubValue = expectedReturn - initialReturn;
+      const returnTrend =
+        initialReturn !== 0
+          ? ((expectedReturn - initialReturn) / initialReturn) * 100
+          : 0;
 
-    // Calculate subValue (total change in return)
-    const returnSubValue = expectedReturn - initialReturn;
+      metrics.push({
+        id: 2,
+        userId,
+        label: "Expected Return",
+        value: `${expectedReturn.toFixed(2)}%`,
+        subValue:
+          returnSubValue >= 0
+            ? `+${returnSubValue.toFixed(2)}%`
+            : `${returnSubValue.toFixed(2)}%`,
+        trend: returnTrend,
+      });
 
-    // Calculate trend (percentage change in return)
-    const returnTrend =
-      ((expectedReturn - initialReturn) / initialReturn) * 100;
+      // Portfolio Risk
+      const latestRisk = latestOpt.risk;
+      const earliestRisk = earliestOpt.risk;
+      const riskSubValue = latestRisk - earliestRisk;
+      const riskTrend =
+        earliestRisk !== 0
+          ? ((latestRisk - earliestRisk) / earliestRisk) * 100
+          : 0;
 
-    const expectedReturnMetric = {
-      id: 2,
-      userId: userId,
-      label: "Expected Return",
-      value: expectedReturn.toFixed(2) + "%", // Display as percentage
-      subValue:
-        returnSubValue >= 0
-          ? `+${returnSubValue.toFixed(2)}%`
-          : `${returnSubValue.toFixed(2)}%`, // Format subValue as percentage
-      trend: returnTrend, // Store trend as number
-    };
-
-    // Add Metric 3: Portfolio Risk
-    const latestRisk = latestOptimization.risk;
-    const earliestRisk = earliestOptimization.risk;
-
-    // Calculate subValue (total change in risk)
-    const riskSubValue = latestRisk - earliestRisk;
-
-    // Calculate trend (percentage change in risk)
-    const riskTrend = ((latestRisk - earliestRisk) / earliestRisk) * 100;
-
-    const portfolioRiskMetric = {
-      id: 3,
-      userId: userId,
-      label: "Portfolio Risk",
-      value: latestRisk.toFixed(2), // Display as number
-      subValue:
-        riskSubValue >= 0
-          ? `+${riskSubValue.toFixed(2)}`
-          : `${riskSubValue.toFixed(2)}`, // Format subValue
-      trend: riskTrend, // Store trend as number
-    };
-
-    // Add metrics to the data
-    metricsData.push(totalPortfolioValueMetric);
-    metricsData.push(expectedReturnMetric);
-    metricsData.push(portfolioRiskMetric);
+      metrics.push({
+        id: 3,
+        userId,
+        label: "Portfolio Risk",
+        value: latestRisk.toFixed(2),
+        subValue:
+          riskSubValue >= 0
+            ? `+${riskSubValue.toFixed(2)}`
+            : `${riskSubValue.toFixed(2)}`,
+        trend: riskTrend,
+      });
+    }
 
     return {
-      metrics: metricsData,
+      metrics,
       assets: userAssets,
       history: historyData,
       frontier: frontierData,
