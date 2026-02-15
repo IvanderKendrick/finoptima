@@ -83,7 +83,7 @@ export default function History() {
                 </TableRow>
               ) : (
                 history?.map((item) => (
-                  <TableRow key={item.id} className="group">
+                  <TableRow key={item.id}>
                     <TableCell className="pl-6 font-medium text-slate-900">
                       {item.date
                         ? format(new Date(item.date), "MMM dd, yyyy HH:mm")
@@ -99,7 +99,7 @@ export default function History() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-slate-400 hover:text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="h-8 w-8 text-slate-400 hover:text-emerald-600"
                           onClick={() =>
                             navigate(`/history/optimization/${item.id}`)
                           }
@@ -112,7 +112,7 @@ export default function History() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="h-8 w-8 text-slate-400 hover:text-red-500"
                           onClick={() => handleDelete(item.id)}
                           aria-label="Delete"
                           title="Delete"

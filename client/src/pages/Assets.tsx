@@ -311,10 +311,7 @@ export default function Assets() {
                 </TableRow>
               ) : (
                 assets?.map((asset) => (
-                  <TableRow
-                    key={asset.id}
-                    className="group hover:bg-slate-50/50"
-                  >
+                  <TableRow key={asset.id} className="hover:bg-slate-50/50">
                     <TableCell className="pl-6 font-medium">
                       <div className="flex flex-col">
                         <span className="text-slate-900">{asset.symbol}</span>
@@ -333,7 +330,7 @@ export default function Assets() {
                       {asset.risk}%
                     </TableCell>
                     <TableCell className="text-right pr-6">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="icon"
