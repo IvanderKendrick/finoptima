@@ -16,8 +16,18 @@ import { useAuth } from "@/hooks/use-auth-provider";
 import { Zap } from "lucide-react";
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address")
+    .max(254, "Email is too long"),
+  password: z
+    .string()
+    .trim()
+    .min(1, "Password is required")
+    .max(72, "Password is too long"),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
